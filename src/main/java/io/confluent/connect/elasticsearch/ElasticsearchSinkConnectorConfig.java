@@ -192,6 +192,13 @@ public class ElasticsearchSinkConnectorConfig extends AbstractConfig {
   private static final String IGNORE_KEY_DISPLAY = "Ignore Key mode";
   private static final boolean IGNORE_KEY_DEFAULT = false;
 
+  public static final String IGNORE_IDS_CONFIG = "ids.ignore";
+  private static final String IGNORE_IDS_DOC =
+      "Whether to ignore the Elasticsearch document ID."
+          + " When this is set to ``true``, document IDs will not be generated";
+  private static final String IGNORE_IDS_DISPLAY = "Ignore IDs mode";
+  private static final boolean IGNORE_IDS_DEFAULT = false;
+
   public static final String IGNORE_SCHEMA_CONFIG = "schema.ignore";
   private static final String IGNORE_SCHEMA_DOC =
       "Whether to ignore schemas during indexing. When this is set to ``true``, the record schema"
@@ -325,6 +332,14 @@ public class ElasticsearchSinkConnectorConfig extends AbstractConfig {
   private static final String KERBEROS_KEYTAB_PATH_DEFAULT = null;
 
   // Data stream configs
+
+  public static final String DATA_STREAM_USETOPICNAME_CONFIG = "data.stream.usetopicname";
+  private static final String DATA_STREAM_USETOPICNAME_DOC = "True if the connector should use the "
+      + "topic name to create the data stream. This configuration supersedes the dataset and data "
+      + "type configs.";
+  private static final String DATA_STREAM_USETOPICNAME_DISPLAY = "Data Stream Use Topic Name";
+  private static final boolean DATA_STREAM_USETOPICNAME_DEFAULT = false;
+
   public static final String DATA_STREAM_DATASET_CONFIG = "data.stream.dataset";
   private static final String DATA_STREAM_DATASET_DOC =
       "Generic name describing data ingested and its structure to be written to a data stream. Can "
@@ -391,6 +406,8 @@ public class ElasticsearchSinkConnectorConfig extends AbstractConfig {
   public enum DataStreamType {
     LOGS,
     METRICS,
+    TRACES,
+    SYNTHETICS,
     NONE
   }
 
@@ -617,6 +634,16 @@ public class ElasticsearchSinkConnectorConfig extends AbstractConfig {
             Width.SHORT,
             IGNORE_KEY_DISPLAY
         ).define(
+            IGNORE_IDS_CONFIG,
+            Type.BOOLEAN,
+            IGNORE_IDS_DEFAULT,
+            Importance.LOW,
+            IGNORE_IDS_DOC,
+            DATA_CONVERSION_GROUP,
+            ++order,
+            Width.SHORT,
+            IGNORE_IDS_DISPLAY
+        ).define(
             IGNORE_SCHEMA_CONFIG,
             Type.BOOLEAN,
             IGNORE_SCHEMA_DEFAULT,
@@ -803,6 +830,16 @@ public class ElasticsearchSinkConnectorConfig extends AbstractConfig {
     int order = 0;
     configDef
         .define(
+            DATA_STREAM_USETOPICNAME_CONFIG,
+            Type.BOOLEAN,
+            DATA_STREAM_USETOPICNAME_DEFAULT,
+            Importance.LOW,
+            DATA_STREAM_USETOPICNAME_DOC,
+            DATA_STREAM_GROUP,
+            ++order,
+            Width.SHORT,
+            DATA_STREAM_USETOPICNAME_DISPLAY
+        ).define(
             DATA_STREAM_DATASET_CONFIG,
             Type.STRING,
             DATA_STREAM_DATASET_DEFAULT,
@@ -853,7 +890,8 @@ public class ElasticsearchSinkConnectorConfig extends AbstractConfig {
   }
 
   public boolean isDataStream() {
-    return dataStreamType() != DataStreamType.NONE && !dataStreamDataset().isEmpty();
+    return dataStreamUseTopicName() || (dataStreamType() != DataStreamType.NONE 
+        && !dataStreamDataset().isEmpty());
   }
 
   public boolean isProxyWithAuthenticationConfigured() {
@@ -925,6 +963,10 @@ public class ElasticsearchSinkConnectorConfig extends AbstractConfig {
     return getBoolean(DROP_INVALID_MESSAGE_CONFIG);
   }
 
+  public boolean dataStreamUseTopicName() {
+    return getBoolean(DATA_STREAM_USETOPICNAME_CONFIG);
+  }
+
   public String dataStreamDataset() {
     return getString(DATA_STREAM_DATASET_CONFIG);
   }
@@ -947,6 +989,10 @@ public class ElasticsearchSinkConnectorConfig extends AbstractConfig {
 
   public boolean ignoreKey() {
     return getBoolean(IGNORE_KEY_CONFIG);
+  }
+
+  public boolean ignoreIds() {
+    return getBoolean(IGNORE_IDS_CONFIG);
   }
 
   public Set<String> ignoreKeyTopics() {

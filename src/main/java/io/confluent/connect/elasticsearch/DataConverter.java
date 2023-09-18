@@ -175,11 +175,19 @@ public class DataConverter {
             .upsert(payload, XContentType.JSON)
             .retryOnConflict(Math.min(config.maxInFlightRequests(), 5));
       case INSERT:
-        OpType opType = config.isDataStream() ? OpType.CREATE : OpType.INDEX;
-        return maybeAddExternalVersioning(
-            new IndexRequest(index).id(id).source(payload, XContentType.JSON).opType(opType),
-            record
-        );
+        if (config.ignoreIds()) {
+          OpType opType = config.isDataStream() ? OpType.CREATE : OpType.INDEX;
+          return maybeAddExternalVersioning(
+              new IndexRequest(index).source(payload, XContentType.JSON).opType(opType),
+              record
+          );
+        } else {
+          OpType opType = config.isDataStream() ? OpType.CREATE : OpType.INDEX;
+          return maybeAddExternalVersioning(
+              new IndexRequest(index).id(id).source(payload, XContentType.JSON).opType(opType),
+              record
+          );
+        }
       default:
         return null; // shouldn't happen
     }

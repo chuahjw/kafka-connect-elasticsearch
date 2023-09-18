@@ -195,6 +195,13 @@ public class ElasticsearchSinkTask extends SinkTask {
     if (topic.length() > 100) {
       topic = topic.substring(0, 100);
     }
+
+    // Use topic name directly
+    // TODO: Check formatting
+    if (config.dataStreamUseTopicName()) {
+      return topic;
+    }
+
     String dataStream = String.format(
         "%s-%s-%s",
         config.dataStreamType().name().toLowerCase(),

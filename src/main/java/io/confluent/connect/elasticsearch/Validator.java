@@ -44,6 +44,7 @@ import static io.confluent.connect.elasticsearch.ElasticsearchSinkConnectorConfi
 import static io.confluent.connect.elasticsearch.ElasticsearchSinkConnectorConfig.CONNECTION_USERNAME_CONFIG;
 import static io.confluent.connect.elasticsearch.ElasticsearchSinkConnectorConfig.DATA_STREAM_DATASET_CONFIG;
 import static io.confluent.connect.elasticsearch.ElasticsearchSinkConnectorConfig.DATA_STREAM_TIMESTAMP_CONFIG;
+import static io.confluent.connect.elasticsearch.ElasticsearchSinkConnectorConfig.DATA_STREAM_USETOPICNAME_CONFIG;
 import static io.confluent.connect.elasticsearch.ElasticsearchSinkConnectorConfig.DATA_STREAM_TYPE_CONFIG;
 import static io.confluent.connect.elasticsearch.ElasticsearchSinkConnectorConfig.DataStreamType;
 import static io.confluent.connect.elasticsearch.ElasticsearchSinkConnectorConfig.FLUSH_TIMEOUT_MS_CONFIG;
@@ -138,14 +139,19 @@ public class Validator {
   }
 
   private void validateDataStreamConfigs() {
-    if (config.dataStreamType() == DataStreamType.NONE ^ config.dataStreamDataset().isEmpty()) {
+    if (!config.dataStreamUseTopicName() 
+        && (config.dataStreamType() == DataStreamType.NONE 
+        ^ config.dataStreamDataset().isEmpty())) {
       String errorMessage = String.format(
-          "Either both or neither '%s' and '%s' must be set.",
+          "Either both or neither '%s' and '%s' must be set. Alternatively, '%s' "
+            + "can be set to use the topic name directly.",
           DATA_STREAM_DATASET_CONFIG,
-          DATA_STREAM_TYPE_CONFIG
+          DATA_STREAM_TYPE_CONFIG,
+          DATA_STREAM_USETOPICNAME_CONFIG
       );
       addErrorMessage(DATA_STREAM_TYPE_CONFIG, errorMessage);
       addErrorMessage(DATA_STREAM_DATASET_CONFIG, errorMessage);
+      addErrorMessage(DATA_STREAM_USETOPICNAME_CONFIG, errorMessage);
     }
 
     if (config.isDataStream() && config.writeMethod() == WriteMethod.UPSERT) {
